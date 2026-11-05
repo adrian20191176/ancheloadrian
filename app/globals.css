@@ -1,351 +1,231 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f7f2ea;
-  --foreground: #151515;
-  --muted: #62605b;
-  /* Decorative teal. --accent-ink is the text-safe version (4.99:1 on cream). */
-  --accent: #0f8b8d;
-  --accent-ink: #0c7476;
-  --accent-deep: #096063;
-  --surface: #ffffff;
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, "Courier New", monospace;
-  --avatar-height: min(44vh, 320px);
+/* Design tokens ------------------------------------------------------------
+ * A warm, sunny palette: sunflower yellow for energy, a soft warm ink instead
+ * of pure black, and cream instead of stark white. Every text pairing below
+ * clears WCAG AA:
+ *   ink on sun 11.2:1 · ink on cream 15.9:1 · muted on cream 5.4:1
+ *   umber on sun 5.6:1 · mist on ink 6.3:1 · sun on ink 11.2:1
+ */
+@theme {
+  --color-sun: #ffc83d;
+  --color-sun-soft: #ffe7a3;
+  --color-ink: #1c1a17;
+  --color-ink-2: #26231f;
+  --color-cream: #fbf4e8;
+  --color-paper: #fffdf7;
+  --color-muted: #6b6357;
+  --color-mist: #a39b8e;
+  --color-umber: #5a4a1e;
+  --color-leaf: #1f8a4c;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-spin-slow: spin 16s linear infinite;
+  --animate-ping-soft: ping-soft 2.4s ease-out infinite;
+  --animate-wave: wave 2.6s ease-in-out infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes ping-soft {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    80%,
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+
+  @keyframes wave {
+    0%,
+    60%,
+    100% {
+      transform: rotate(0deg);
+    }
+    10%,
+    30% {
+      transform: rotate(16deg);
+    }
+    20%,
+    40% {
+      transform: rotate(-8deg);
+    }
+  }
 }
 
+/* next/font exposes each family as a CSS variable on <html>. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --font-display: var(--font-anton), Impact, "Arial Narrow", sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, Menlo, monospace;
+  --font-hand: var(--font-caveat), "Comic Sans MS", cursive;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Base --------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    /* Matches the hero and footer, so overscroll never flashes another colour. */
+    background: var(--color-sun);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Stops iOS inflating text when a phone is turned to landscape. */
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* The open menu covers the page, so the page behind it should stay put. */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-cream);
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-sun);
+    color: var(--color-ink);
+  }
+
+  /* Focus rings take the colour of the surface they sit on, not the element:
+     an ink pill on the yellow hero still gets an ink ring. Dark sections switch
+     --ring to sun. */
+  :root {
+    --ring: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
 }
 
-* {
-  margin: 0;
+/* Scroll-linked word reveal --------------------------------------------------
+ * Words start faint and brighten one after another as the paragraph scrolls
+ * through the viewport. Browsers without scroll-driven animations (or people
+ * who prefer less motion) simply get the finished, fully readable text.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      view-timeline: --reveal block;
+    }
+
+    .reveal-word {
+      animation: reveal-word linear both;
+      animation-timeline: --reveal;
+      animation-range: cover calc(10% + var(--p) * 30%) cover
+        calc(16% + var(--p) * 30%);
+    }
+  }
 }
 
-html {
-  min-height: 100%;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  /* Stops iOS inflating text when a phone is turned to landscape. */
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+@keyframes reveal-word {
+  from {
+    opacity: 0.16;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-img,
-picture,
-svg,
-canvas,
-video {
-  display: block;
-  max-width: 100%;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent-deep);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-
-::selection {
-  background: rgba(15, 139, 141, 0.22);
-}
-
-/* Layout ------------------------------------------------------------------ */
-
-.site-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background:
-    linear-gradient(135deg, rgba(15, 139, 141, 0.16), transparent 34%),
-    linear-gradient(315deg, rgba(226, 106, 76, 0.13), transparent 32%),
-    var(--background);
-  color: var(--foreground);
-}
-
-.intro-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "heading"
-    "avatar"
-    "body";
-  align-content: start;
-  gap: clamp(0.9rem, 3.5vw, 1.4rem);
-  width: min(1180px, calc(100% - 2.5rem));
-  margin: 0 auto;
-  padding: clamp(1.5rem, 6vw, 3rem) 0 clamp(2.5rem, 9vw, 3.5rem);
-}
-
-.intro-heading {
-  grid-area: heading;
-}
-
-.intro-body {
-  grid-area: body;
-  display: grid;
-  gap: clamp(0.85rem, 2.5vw, 1.1rem);
-}
-
-/* Type -------------------------------------------------------------------- */
-
-.eyebrow {
-  color: var(--accent-ink);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-h1 {
-  font-size: clamp(3.25rem, 13vw, 7rem);
-  line-height: 0.9;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-}
-
-.intro-text {
-  max-width: 34rem;
-  color: var(--muted);
-  font-size: clamp(1rem, 1.6vw, 1.15rem);
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-
-/* Contact ----------------------------------------------------------------- */
-
-.availability {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: 0.55rem;
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-
-.availability-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  flex: none;
-  border-radius: 50%;
-  background: #1f8a4c;
-  box-shadow: 0 0 0 3px rgba(31, 138, 76, 0.16);
-  animation: availability-pulse 2.6s ease-in-out infinite;
-}
-
-.contact-block {
-  display: grid;
-  gap: 0.7rem;
-}
-
-.whatsapp-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  min-height: 3rem;
-  padding: 0.9rem 1.6rem;
-  border-radius: 999px;
-  background: var(--accent-ink);
-  color: var(--surface);
-  font-size: 1rem;
-  font-weight: 700;
-  text-align: center;
-  box-shadow: 0 12px 26px rgba(12, 116, 118, 0.26);
-  -webkit-tap-highlight-color: transparent;
+/* Process cards ----------------------------------------------------------------
+ * The first card is lit up until you hover another one; the highlight then
+ * follows the pointer.
+ */
+.step-card {
   transition:
-    transform 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease;
+    background-color 0.35s var(--ease-out-soft),
+    color 0.35s var(--ease-out-soft),
+    border-color 0.35s var(--ease-out-soft),
+    transform 0.35s var(--ease-out-soft);
 }
 
-.whatsapp-button svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex: none;
+.step-list:not(:hover) > .step-card:first-child,
+.step-card:hover {
+  background-color: var(--color-sun);
+  border-color: var(--color-sun);
+  color: var(--color-ink);
 }
 
-.whatsapp-button:hover,
-.whatsapp-button:focus-visible {
-  transform: translateY(-2px);
-  background: var(--accent-deep);
-  box-shadow: 0 16px 32px rgba(12, 116, 118, 0.32);
+.step-list:not(:hover) > .step-card:first-child .step-blurb,
+.step-card:hover .step-blurb {
+  color: var(--color-umber);
 }
 
-.whatsapp-button:active {
-  transform: translateY(0);
-  box-shadow: 0 8px 18px rgba(12, 116, 118, 0.24);
-}
-
-.contact-note {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.contact-number {
-  color: var(--accent-ink);
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-/* Avatar ------------------------------------------------------------------ */
-
-.avatar-stage {
-  position: relative;
-  grid-area: avatar;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: var(--avatar-height);
-}
-
-.avatar-model {
-  width: 100%;
-  height: 100%;
-  background-color: transparent;
-  animation: avatar-float 6s ease-in-out infinite;
-}
-
-.avatar-status {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 0.7rem;
-  padding: 0 1.25rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-  text-align: center;
-  pointer-events: none;
-}
-
-.avatar-progress {
-  width: min(200px, 70%);
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(21, 21, 21, 0.12);
-  overflow: hidden;
-}
-
-.avatar-progress-bar {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent-ink);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.3s ease;
-}
-
-.avatar-hint {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* The hint only helps where there is a mouse to drag with. */
-@media (hover: hover) and (pointer: fine) {
-  .avatar-hint {
-    opacity: 0.55;
-  }
-}
-
-@keyframes avatar-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .step-card:hover {
     transform: translateY(-6px);
   }
 }
 
-@keyframes availability-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px rgba(31, 138, 76, 0.16);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(31, 138, 76, 0.05);
+/* Menu dialog --------------------------------------------------------------- */
+
+.menu-dialog {
+  opacity: 0;
+  transform: translateY(-1.5rem);
+  transition:
+    opacity 0.35s var(--ease-out-soft),
+    transform 0.35s var(--ease-out-soft),
+    overlay 0.35s allow-discrete,
+    display 0.35s allow-discrete;
+}
+
+.menu-dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .menu-dialog[open] {
+    opacity: 0;
+    transform: translateY(-1.5rem);
   }
 }
 
-/* Two columns once there is room for them ---------------------------------- */
-
-@media (min-width: 900px) {
-  :root {
-    --avatar-height: min(62vh, 500px);
-  }
-
-  .intro-panel {
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
-    grid-template-areas:
-      "heading avatar"
-      "body    avatar";
-    align-content: center;
-    column-gap: clamp(2rem, 5vw, 4rem);
-    row-gap: 1.5rem;
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding-block: clamp(2rem, 5vw, 3.5rem);
-  }
-
-  .intro-heading {
-    align-self: end;
-  }
-
-  .intro-body {
-    align-self: start;
-  }
-
-  .avatar-stage {
-    align-self: center;
-  }
-
-  .whatsapp-button {
-    justify-self: start;
-  }
+.menu-dialog::backdrop {
+  background: transparent;
 }
+
+/* 3D portrait --------------------------------------------------------------- */
+
+model-viewer {
+  --poster-color: transparent;
+  --progress-bar-height: 0px;
+}
+
+/* Motion safety net ---------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   *,
